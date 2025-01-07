@@ -1,3 +1,27 @@
+// Layout of Contract:
+// version
+// imports
+// errors
+// interfaces, libraries, contracts
+// Type declarations
+// State variables
+// Events
+// Modifiers
+// Functions
+
+// Layout of Functions:
+// constructor
+// receive function (if exists)
+// fallback function (if exists)
+// external
+// public
+// internal
+// private
+// internal & private view & pure functions
+// external & public view & pure functions
+
+// End //
+
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
@@ -9,6 +33,10 @@ pragma solidity ^0.8.19;
  */
 
 contract Raffle{
+
+    /** Errors **/
+    error Raffle__SendMoreToEnterRaffle();
+
     uint256 private immutable i_entranceFee;
 
     constructor(uint256 entranceFee){
@@ -18,7 +46,9 @@ contract Raffle{
 
     function enterRaffle() public payable {
         //Since we are going to be paying an entrace fee, we make our function payable
-
+        if(msg.value < i_entranceFee){
+              revert Raffle__SendMoreToEnterRaffle();
+        }
     }
 
     function pickWinner() public {}
