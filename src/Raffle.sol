@@ -155,6 +155,8 @@ contract Raffle is VRFConsumerBaseV2Plus {
         the players do not maintain the same position, essensially the to ensure the
         same player is not picked even if the same index is picked at random */
         s_players = new address payable[](0);
+        /* reset last time interval back to last time stamp */
+        s_lastTimeStamp = block.timestamp;
         (bool success, ) = recentWinner.call{value: address(this).balance}("");
         if(!success){
             revert Raffle__TransferFailed();
