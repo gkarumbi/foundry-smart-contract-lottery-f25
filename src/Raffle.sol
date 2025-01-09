@@ -39,7 +39,16 @@ contract Raffle is VRFConsumerBaseV2Plus {
      * Errors *
      */
     error Raffle__SendMoreToEnterRaffle();
+    error Raffle__TransferFailed();
+    error Raffle__RaffleNotOpen();
 
+    /* Type Declarations */
+    enum RaffleState {
+        OPEN,
+        CALCULATING
+    }
+
+    /* State Variables */
     uint256 private immutable i_entranceFee;
     //@dev The duration of the lottery in seconds
     uint256 private immutable i_interval;
@@ -59,6 +68,8 @@ contract Raffle is VRFConsumerBaseV2Plus {
     address payable[] private s_players;
 
     address private s_recentWinner;
+
+    RaffleState private s_raffleState;
 
     /* Events */
 
@@ -80,12 +91,16 @@ contract Raffle is VRFConsumerBaseV2Plus {
         i_keyHash = gasLane;
         i_subscriptionId = subscriptionId;
         i_callbackGasLimit = callbackGasLimit;
+        s_raffleState = RaffleState.OPEN;
     }
 
     function enterRaffle() external payable {
         //Since we are going to be paying an entrace fee, we make our function payable
         if (msg.value < i_entranceFee) {
             revert Raffle__SendMoreToEnterRaffle();
+        }
+        if (s_raffleState != RaffleState.OPEN) {
+            revert Raffle__RaffleNotOpen();
         }
         /**
          * When a player wants to enter the raffle they are going to send an entrance fee,
@@ -110,6 +125,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
         if (block.timestamp - s_lastTimeStamp > i_interval) {
             revert();
         }
+        s_raffleState = RaffleState.CALCULATING;
         VRFV2PlusClient.RandomWordsRequest memory request = VRFV2PlusClient.RandomWordsRequest({
             keyHash: i_keyHash,
             subId: i_subscriptionId,
@@ -134,10 +150,10 @@ contract Raffle is VRFConsumerBaseV2Plus {
         uint256 indexOfWinner = randomWords[0] % s_players.length;
         address payable recentWinner = s_players[indexOfWinner];
         s_recentWinner = recentWinner;
-
+        s_raffleState = RaffleState.OPEN;
         (bool success, ) = recentWinner.call{value: address(this).balance}("");
         if(!success){
-            revert()
+            revert Raffle__TransferFailed();
         }
 
     }
