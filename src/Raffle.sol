@@ -132,7 +132,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
      * @return upkeepNeeded  - true if it is time to restart the lottery
      * @return - ignored
      */
-    function checkUpkeep(bytes calldata /* checkData */ )
+    function checkUpkeep(bytes memory /* checkData */ )
         public
         view
         returns (bool upkeepNeeded, bytes memory /* performData */ )
@@ -148,14 +148,18 @@ contract Raffle is VRFConsumerBaseV2Plus {
        return(upkeepNeeded,"");
 
     }
-
-    function pickWinner() external {
+    //. Be automaticall called and refactored from pickWinner() to performUpkeep()
+    function performUpkeep(bytes calldata /* performData */) external {
         //@dev check to see if enough time has passed
         //@dev we create a variable s_lastTimeStamp to track the last recorded time stamp
 
-        if (block.timestamp - s_lastTimeStamp > i_interval) {
+        /* if (block.timestamp - s_lastTimeStamp > i_interval) {
             revert();
-        }
+        } */
+       (bool upkeepNeeded,) = checkUpkeep("");
+       if (!upkeepNeeded) {
+        revert();
+       }
         s_raffleState = RaffleState.CALCULATING;
         VRFV2PlusClient.RandomWordsRequest memory request = VRFV2PlusClient.RandomWordsRequest({
             keyHash: i_keyHash,
