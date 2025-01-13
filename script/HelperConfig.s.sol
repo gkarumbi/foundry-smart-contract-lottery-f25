@@ -22,7 +22,7 @@ contract HelperConfig is CodeConstants, Script{
     mapping (uint256 chainId => NetworkConfig) public networkConfigs;
 
     constructor(){
-        networkConfigs[1115511] = getSepoliaEthConfig();
+        networkConfigs[ETH_SEPOLIA_CHAIN_ID] = getSepoliaEthConfig();
 
     }
 
