@@ -14,7 +14,7 @@ abstract contract CodeConstants {
 
     int256 public MOCK_WEI_PER_UNIT_LINK = 4e15;
 
-    uint256 public constant ETH_SEPOLIA_CHAIN_ID = 1115511;
+    uint256 public constant ETH_SEPOLIA_CHAIN_ID = 11155111;
     uint256 public constant LOCAL_CHAIN_ID = 31337;
 }
 
@@ -29,6 +29,7 @@ contract HelperConfig is CodeConstants, Script {
         uint256 subscriptionId;
         uint32 callbackGasLimit;
         address link;
+        address account;
     }
 
     NetworkConfig public localNetworkConfig;
@@ -59,9 +60,10 @@ contract HelperConfig is CodeConstants, Script {
             interval: 30, // 30 sec
             vrfCoordinator: 0x9DdfaCa8183c41ad55329BdeeD9F6A8d53168B1B,
             gasLane: 0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae,
-            subscriptionId: 0,
+            subscriptionId: 51978895372108053182231984528340189937968283486487786223907817293901127548127,
             callbackGasLimit: 500000,
-            link: 0x779877A7B0D9E8603169DdbD7836e478b4624789
+            link: 0x779877A7B0D9E8603169DdbD7836e478b4624789,
+            account: 0xb7b14456f158ddd0fc90DC3e366955D4065C4511
         });
     }
 
@@ -88,7 +90,8 @@ contract HelperConfig is CodeConstants, Script {
             gasLane: 0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae,
             subscriptionId: 0,
             callbackGasLimit: 500000,
-            link: address(linkToken)
+            link: address(linkToken),
+            account: 0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38
         });
 
         return localNetworkConfig;

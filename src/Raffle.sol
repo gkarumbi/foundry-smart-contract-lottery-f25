@@ -41,6 +41,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
     error Raffle__SendMoreToEnterRaffle();
     error Raffle__TransferFailed();
     error Raffle__RaffleNotOpen();
+    error Raffle__UpkeepNotNeeded(uint256 balance, uint256 playersLength, uint256 raffleState);
 
     /* Type Declarations */
     enum RaffleState {
@@ -75,6 +76,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
 
     event RaffleEntered(address indexed player);
     event WinnerPicked(address indexed winner);
+    event RequestedRaffleWinner(uint256 indexed requestId);
 
     constructor(
         uint256 entranceFee,
@@ -119,7 +121,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
         emit RaffleEntered(msg.sender);
     }
     //When should the winner be picked
-    
+
     /**
      * @dev This is the function that the Chainlink nodes will call to see
      * if the lotterry is ready to have a winner picked
@@ -128,7 +130,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
      * 2. The lottery is open
      * 3. The contract has ETH
      * 4. Implicitly, your subscription has LINK
-     * @param - ignored 
+     * @param - ignored
      * @return upkeepNeeded  - true if it is time to restart the lottery
      * @return - ignored
      */
@@ -137,29 +139,29 @@ contract Raffle is VRFConsumerBaseV2Plus {
         view
         returns (bool upkeepNeeded, bytes memory /* performData */ )
     {
-       /*  if((block.timestamp - s_lastTimeStamp) < i_interval){
+        /*  if((block.timestamp - s_lastTimeStamp) < i_interval){
             revert();
         } */
-       bool timeHasPassed = ((block.timestamp - s_lastTimeStamp) >= i_interval);
-       bool isOpen = s_raffleState == RaffleState.OPEN;
-       bool hasBalance = address(this).balance > 0;
-       bool hasPlayers = s_players.length > 0;
-       upkeepNeeded = timeHasPassed && isOpen && hasBalance && hasPlayers;
-       return(upkeepNeeded,"");
-
+        bool timeHasPassed = ((block.timestamp - s_lastTimeStamp) >= i_interval);
+        bool isOpen = s_raffleState == RaffleState.OPEN;
+        bool hasBalance = address(this).balance > 0;
+        bool hasPlayers = s_players.length > 0;
+        upkeepNeeded = timeHasPassed && isOpen && hasBalance && hasPlayers;
+        return (upkeepNeeded, "");
     }
     //. Be automaticall called and refactored from pickWinner() to performUpkeep()
-    function performUpkeep(bytes calldata /* performData */) external {
+
+    function performUpkeep(bytes calldata /* performData */ ) external {
         //@dev check to see if enough time has passed
         //@dev we create a variable s_lastTimeStamp to track the last recorded time stamp
 
         /* if (block.timestamp - s_lastTimeStamp > i_interval) {
             revert();
         } */
-       (bool upkeepNeeded,) = checkUpkeep("");
-       if (!upkeepNeeded) {
-        revert();
-       }
+        (bool upkeepNeeded,) = checkUpkeep("");
+        if (!upkeepNeeded) {
+            revert Raffle__UpkeepNotNeeded(address(this).balance, s_players.length, uint256(s_raffleState));
+        }
         s_raffleState = RaffleState.CALCULATING;
         VRFV2PlusClient.RandomWordsRequest memory request = VRFV2PlusClient.RandomWordsRequest({
             keyHash: i_keyHash,
@@ -174,9 +176,11 @@ contract Raffle is VRFConsumerBaseV2Plus {
         });
 
         uint256 requestId = s_vrfCoordinator.requestRandomWords(request);
+
+        emit RequestedRaffleWinner(requestId);
     }
 
-    function fulfillRandomWords(uint256 requestedId, uint256[] calldata randomWords) internal override {
+    function fulfillRandomWords(uint256, /*requestedId*/ uint256[] calldata randomWords) internal override {
         /* So how do  we pick our winner?
         we pick our winner by 1st taking a randomly generated number which is going to be 
         only one number in our case, we are going to pull it from our randomWords[] array 
@@ -204,5 +208,21 @@ contract Raffle is VRFConsumerBaseV2Plus {
      */
     function getEntranceFee() external view returns (uint256) {
         return i_entranceFee;
+    }
+
+    function getRaffleState() external view returns (RaffleState) {
+        return s_raffleState;
+    }
+
+    function getPlayer(uint256 indexOfPlayer) external view returns (address) {
+        return s_players[indexOfPlayer];
+    }
+
+    function getLastTimeStamp() external view returns(uint256) {
+        return s_lastTimeStamp;
+    }
+
+    function getRecentWinner() external view returns(address){
+        return s_recentWinner;
     }
 }
